@@ -1,0 +1,19 @@
+# intermediate files of cmake
+*/CMakeCache.txt
+*/CMakeFiles/
+*/Makefile
+*/*.cmake
+*/out
+
+# build target of cmake
+*.dylib
+*.so
+*.a
+
+# gradle
+.gradle*
+*/build
+
+# intellij
+*.iml
+.idea*

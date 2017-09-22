@@ -1,0 +1,61 @@
+import org.gradle.internal.jvm.Jvm
+
+apply plugin: 'java'
+
+/**
+ * Task deps:
+ *
+ * build <- buildNative <- generateJniHeaders <- classes
+ *          (cmake)        (gradle)              (cmake)
+ */
+
+/**
+ * jni / cmake tasks are largely taken from zeromq:
+ * https://github.com/zeromq/zebra/blob/master/bindings/jni/build.gradle
+ */
+task generateJniHeaders(type: Exec, dependsOn: 'classes') {
+    def classpath = sourceSets.main.output.classesDirs.join(":")
+    def appclasspath = configurations.runtime.files*.absolutePath.join(":")
+    def nativeIncludes = "src/main/native"
+    def jniClasses = [
+            'io.jokester.tidyj.TidyHTML5'
+    ]
+    def javah = Jvm.current().getExecutable('javah')
+    commandLine(javah, "-d", nativeIncludes, "-classpath", "$classpath:$appclasspath", *jniClasses)
+}
+
+tasks.withType(Test) {
+    /** NOTE: this library path does not apply to IntelliJ.
+     * @see {https://stackoverflow.com/a/19311972/327815} */
+    systemProperty "java.library.path", "${systemProperties["java.library.path"]}:$projectDir/jniLib"
+}
+
+task initCmake(type: Exec) {
+    inputs.files "CMakeList.txt"
+    outputs.files "CMakeCache.txt", "cmake_install.cmake", "CTestTestfile.cmake", "CMakeFiles", "Makefile"
+    commandLine "cmake", "."
+}
+
+task buildNative(type: Exec, dependsOn: [initCmake, generateJniHeaders]) {
+    inputs.files fileTree('src/main/native').include("*")
+    outputs.files "jniLib/libtidyj.so"
+    commandLine "make", "-j"
+}
+
+tasks.withType(Test) {
+    /** NOTE: this library path does not apply to IntelliJ.
+     * @see {https://stackoverflow.com/a/19311972/327815} */
+    systemProperty "java.library.path", "${systemProperties["java.library.path"]}:$projectDir/jniLib"
+}
+
+test {
+    dependsOn buildNative, "cleanTest"
+}
+
+dependencies {
+    testCompile 'junit:junit:4.12'
+}
+
+repositories {
+    mavenCentral()
+}
