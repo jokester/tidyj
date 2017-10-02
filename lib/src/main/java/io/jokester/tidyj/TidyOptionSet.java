@@ -3,9 +3,26 @@ package io.jokester.tidyj;
 import java.util.ArrayList;
 
 /**
- * A set of options to be applied on a {@link io.jokester.tidyj.TidyJ} instance
- * <p>
+ * A set of options that can be applied to {@link io.jokester.tidyj.TidyJ} instance
+ * before parse starts.
+ *
+ * Internally, a "option set" is just a list of stateless name-value pairs,
+ * it is thus fine to use same option set for multiple documents.
  * See {@see http://api.html-tidy.org/tidy/quickref_5.4.0.html} for available options
+ *
+ * <p>
+ * Types of options:
+ * - bool
+ * - string
+ * - integer
+ * - any: A string value that will be interpreted by libtidy.
+ * </p>
+ *
+ * <p>
+ * If a option is not successfully set (may due to bad name / type / value),
+ * a {@link io.jokester.tidyj.TidyJException.IllegalOption} will be thrown.
+ * </p>
+ *
  */
 public final class TidyOptionSet {
 

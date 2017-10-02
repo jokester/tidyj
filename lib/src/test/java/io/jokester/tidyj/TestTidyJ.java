@@ -15,84 +15,80 @@ public class TestTidyJ {
     public static final String TestHTML2 = "<!DOCTYPE html> <html> <head> <title>test</title> <body> Body</p> </html>";
 
     @Test
-    public void test1() {
-        assertEquals(2, 1 + 1);
-    }
-
-    @Test
     public void createInstance1() throws Exception {
-        TidyJ t = new TidyJ(0, null);
-        boolean hadWarning = t.parseHTML(TestHTML1);
-        assertEquals(false, hadWarning);
-        t.free();
+        try (TidyJ t = new TidyJ(0, null)) {
+            boolean hadWarning = t.parseHTML(TestHTML1);
+            assertEquals(false, hadWarning);
+        }
     }
 
     @Test
     public void createInstance2() throws Exception {
-        TidyJ t = new TidyJ(0, null);
-        boolean hadWarning = t.parseHTML(TestHTML2);
-        assertEquals(true, hadWarning);
-        t.free();
+        try (TidyJ t = new TidyJ(0, null)) {
+            boolean hadWarning = t.parseHTML(TestHTML2);
+            assertEquals(true, hadWarning);
+        }
     }
 
     @Test(expected = TidyJException.AlreadyFreed.class)
-    public void freeTwice() throws Exception {
-        TidyJ t = new TidyJ(0, null);
-        t.free();
-        t.free();
+    public void freeTwiceThrowsAlreadyFreed() throws Exception {
+        TidyJ t_;
+        try (TidyJ t = new TidyJ(0, null)) {
+            t_ = t;
+            /* close() calls free() internally */
+        }
+        t_.free();
     }
 
     @Test
     public void outputBuffer() throws Exception {
-        TidyJ t = new TidyJ(0, null);
-        boolean hadWarning = t.parseHTML(TestHTML2);
+        try (TidyJ t = new TidyJ(0, null)) {
+            t.parseHTML(TestHTML2);
 
+            ByteArrayOutputStream o = new ByteArrayOutputStream();
+            int numBytes = t.save(o);
 
-        ByteArrayOutputStream o = new ByteArrayOutputStream();
-        t.save(o);
+            String s = o.toString();
 
-        String s = o.toString();
-
-        assertEquals("<!DOCTYPE html>\n" +
-                "<html>\n" +
-                "<head>\n" +
-                "<title>test</title>\n" +
-                "</head>\n" +
-                "<body>\n" +
-                "Body\n" +
-                "<p></p>\n" +
-                "</body>\n" +
-                "</html>\n", s);
-        t.free();
+            String expected =
+                    "<!DOCTYPE html>\n" +
+                            "<html>\n" +
+                            "<head>\n" +
+                            "<title>test</title>\n" +
+                            "</head>\n" +
+                            "<body>\n" +
+                            "Body\n" +
+                            "<p></p>\n" +
+                            "</body>\n" +
+                            "</html>\n";
+            assertEquals(expected, s);
+            assertEquals(expected.length(), numBytes);
+        }
     }
 
     @Test(expected = TidyJException.IllegalOption.class)
-    public void setNonexistBoolOption()
-            throws Throwable {
+    public void setNonexistBoolOption() {
         TidyOptionSet o = new TidyOptionSet().addBoolOption("v", false);
-        TidyJ t = new TidyJ(0, o);
-        t.free();
+        try (TidyJ t = new TidyJ(0, o)) {
+        }
     }
 
     @Test(expected = TidyJException.IllegalOption.class)
-    public void setNonBoolOption()
-            throws Throwable {
-        TidyOptionSet o = new TidyOptionSet().addBoolOption(/* a string */ "alt-text", false);
-        TidyJ t = new TidyJ(0, o);
-        t.free();
+    public void setNonBoolOption() {
+        TidyOptionSet o = new TidyOptionSet().addBoolOption(/* a string option */ "alt-text", false);
+        try (TidyJ t = new TidyJ(0, o)) {
+        }
     }
 
     @Test(expected = TidyJException.IllegalOption.class)
-    public void setReadonlyBoolOption()
-            throws Throwable {
+    public void setReadonlyBoolOption() {
         TidyOptionSet o = new TidyOptionSet().addBoolOption(/* a string */ "unknown!", false);
-        TidyJ t = new TidyJ(0, o);
-        t.free();
+        try (TidyJ t = new TidyJ(0, o)) {
+        }
     }
 
     @Test
-    public void setOptions()
-            throws Throwable {
+    public void setOptions() {
         TidyOptionSet o = new TidyOptionSet()
                 .addBoolOption("input-xml", false)
                 .addBoolOption("quiet", true)
@@ -102,49 +98,48 @@ public class TestTidyJ {
                 .addAnyOption("indent", "auto")
                 .addAnyOption("indent", "0")
                 .addAnyOption("new-empty-tags", "hey1");
-
-        TidyJ t = new TidyJ(0, o);
-        t.free();
+        try (TidyJ t = new TidyJ(0, o)) {
+        }
     }
 
     @Test(expected = TidyJException.IllegalOption.class)
-    public void setNonexistStringOption() throws TidyJException {
+    public void setNonexistStringOption() {
         TidyOptionSet o = new TidyOptionSet()
                 .addStringOption("blt-text", "hey");
-        TidyJ t = new TidyJ(0, o);
-        t.free();
+        try (TidyJ t = new TidyJ(0, o)) {
+        }
     }
 
     @Test(expected = TidyJException.IllegalOption.class)
-    public void setNonexistIntOption() throws TidyJException {
+    public void setNonexistIntOption() {
         TidyOptionSet o = new TidyOptionSet()
                 .addIntOption("show-errrrors", 5);
-        TidyJ t = new TidyJ(0, o);
-        t.free();
+        try (TidyJ t = new TidyJ(0, o)) {
+        }
     }
 
     @Test(expected = TidyJException.IllegalOption.class)
-    public void setNonIntOption() throws TidyJException {
+    public void setNonIntOption() {
         TidyOptionSet o = new TidyOptionSet()
                 .addIntOption("show-info", 5);
-        TidyJ t = new TidyJ(0, o);
-        t.free();
+        try (TidyJ t = new TidyJ(0, o)) {
+        }
     }
 
     @Test(expected = TidyJException.IllegalOption.class)
-    public void setNonexistAnyOption() throws TidyJException {
+    public void setNonexistAnyOption() {
         TidyOptionSet o = new TidyOptionSet()
                 .addAnyOption("show-errrrors", "5");
-        TidyJ t = new TidyJ(0, o);
-        t.free();
+        try (TidyJ t = new TidyJ(0, o)) {
+        }
     }
 
     @Test(expected = TidyJException.IllegalOption.class)
-    public void setIncorrectAnyOption() throws TidyJException {
+    public void setIncorrectAnyOption() {
         TidyOptionSet o = new TidyOptionSet()
                 .addAnyOption("new-empty-tags", "");
-        TidyJ t = new TidyJ(0, o);
-        t.free();
+        try (TidyJ t = new TidyJ(0, o)) {
+        }
     }
 
 }

@@ -1,7 +1,5 @@
 # tidyj
 
----
-
 A Java JNI wrapper for [libtidy](http://www.html-tidy.org/developer/).
 
 ## Status

@@ -7,14 +7,24 @@ import java.io.PushbackInputStream;
 import java.nio.ByteBuffer;
 
 /**
- * TidyHTML5: a html tidy / parser
+ * tidyj: a html tidy / parser
  * <p>
  * backened by tidy-html5 {@see https://github.com/htacg/tidy-html5}
  *
  * @author Wang Guan
- *         <p>
- *         TODO: v0.1 basic tidy and dom read-only access
- *         TODO: implement memory restriction (custom allocator / manual free from java)
+ *
+ *
+ * Before memory management is implemented,
+ * it is advised to use try-with to ensure TidyJ instance get closed:
+ *
+ * <pre>
+ * {@code
+ * try (TidyJ t = TidyJ.parseString(string)) {
+ *     ...code that uses t
+ * }
+ * </pre>
+ *
+ * TODO: v0.1 basic tidy / IO
  */
 public final class TidyJ implements Closeable {
 
@@ -32,7 +42,7 @@ public final class TidyJ implements Closeable {
         return new TidyJ(maxMem, options);
     }
 
-    private final ByteBuffer nativeRegion;
+    private final ByteBuffer nativeRegion = null;
     private final long pTidyDoc;
     private boolean freed = false;
 
@@ -48,8 +58,7 @@ public final class TidyJ implements Closeable {
      * @param maxMem  maximum memory to use
      * @param options options
      */
-    TidyJ(int maxMem, TidyOptionSet options) throws TidyJException {
-        nativeRegion = null; // ByteBuffer.allocateDirect(maxMem);
+    TidyJ(int maxMem, TidyOptionSet options)  {
         pTidyDoc = this.nativeInit(nativeRegion);
         if (pTidyDoc == 0)
             throw new TidyJException.InitError("error initializing ");
@@ -111,9 +120,9 @@ public final class TidyJ implements Closeable {
     }
 
     /**
-     * Write to stream and close the stream
+     * Write to and close the stream
      * @param stream output stream
-     * @return bytes written
+     * @return num of bytes written
      */
     public int save(OutputStream stream) throws IOException {
         return save(stream, true);
@@ -127,8 +136,8 @@ public final class TidyJ implements Closeable {
      */
     synchronized
     public int save(OutputStream stream, boolean closeAfterFinish) throws IOException {
-        ensureNotFreed();
-
+        // TODO: can we use a read-write lock to allow multi-threaded write?
+        assertNotFreed();
         try {
             int bytesWritten = nativeWriteStream(pTidyDoc, stream);
             if (bytesWritten < 0) {
@@ -136,29 +145,43 @@ public final class TidyJ implements Closeable {
             }
             stream.flush();
             return bytesWritten;
-
         } finally {
             if (closeAfterFinish)
                 stream.close();
-
         }
     }
 
+    /**
+     * Destroy underlying libtidy `TidyDoc` object, and return memory to native heap.
+     *
+     * After a call to close() or free(), most API of this instance would
+     * throw {@link TidyJException.AlreadyFreed}
+     *
+     * close() is idempotent: calling it more than once have no effect
+     */
     synchronized
     public void close() {
         if (!freed)
             free();
     }
 
+    /**
+     * Destroy underlying libtidy `TidyDoc` object, and return memory to native heap
+     *
+     * After a call to close() or free(), most API of this instance would
+     * throw {@link TidyJException.AlreadyFreed}
+     *
+     * calling free() when TidyDoc is already freed would throw {@link TidyJException.AlreadyFreed}
+     */
     synchronized
     public void free() {
-        ensureNotFreed();
+        assertNotFreed();
         nativeFree(pTidyDoc);
         freed = true;
     }
 
     synchronized
-    private void ensureNotFreed() {
+    private void assertNotFreed() {
         if (freed)
             throw new TidyJException.AlreadyFreed("already freed");
     }
@@ -169,7 +192,7 @@ public final class TidyJ implements Closeable {
      * @return opaque handles to matched nodes (internally, a TidyNode pointer)
      */
     synchronized long[] queryDom(DomQuery q) {
-        ensureNotFreed();
+        assertNotFreed();
         return null;
         // TODO
     }
@@ -180,7 +203,7 @@ public final class TidyJ implements Closeable {
      * @return DomNode objects that completely resides in java heap
      */
     synchronized DomNode[] pullDom(long[] pNodes) {
-        ensureNotFreed();
+        assertNotFreed();
         return null;
         // TODO: how to write this in native?
     }
