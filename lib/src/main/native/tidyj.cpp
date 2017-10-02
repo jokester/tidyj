@@ -1,39 +1,60 @@
-#include <jni.h>
 #include <cstring>
-#include "io_jokester_tidyj_TidyHTML5.h"
+#include "io_jokester_tidyj_TidyJ.h"
 #include "tidy.h"
+#include "jni-util.hpp"
+#include "tidyj-mem.h"
+#include "tidyj-error.h"
+
+/** a report filter to silence warnings */
+extern "C"
+Bool silenceReports( TidyDoc tdoc, TidyReportLevel lvl,
+                                                uint line, uint col, ctmbstr code, va_list args ) {
+    return yes;
+}
+/**
+ * FIXME:
+ * - learn how to cast pointer from/to jlong
+ *   (feeling that explicit conversion may not be the right way)
+ */
 
 /**
+ * native long nativeInit();
  *
+ * TODO:
+ * - custom memory allocator, using direct ByteBuffer
  */
-JNIEXPORT jboolean JNICALL Java_io_jokester_tidyj_TidyHTML5_initLibTidy
-(JNIEnv * env, jobject jthis) {
+JNIEXPORT jlong JNICALL Java_io_jokester_tidyj_TidyJ_nativeInit
+(JNIEnv * env, jobject jthis, jobject nativeHeap) {
     TidyDoc tdoc = NULL;
-    int intStatus = 0;
-    Bool boolStatus = no;
+
+    if (nativeHeap) {
+        /** NOT supported */
+        goto fail;
+    }
 
     tdoc = tidyCreate();
-    if (!tdoc) goto fail;
 
-    boolStatus = tidyOptSetBool(tdoc, TidyDropEmptyElems, no);
-    if (!boolStatus) goto fail;
+    if (!tdoc) {
+        goto fail;
+    }
 
+    // TODO: does cpp have a cast for this?
+    return (jlong) tdoc;
 
-
-
-
-
-
-    return JNI_TRUE;
 fail:
-    return JNI_FALSE;
+    if (tdoc) {
+        tidyRelease(tdoc);
+    }
+    return 0;
 }
 
-JNIEXPORT jint JNICALL Java_io_jokester_tidyj_TidyHTML5_nativeParseString
-(JNIEnv *env, jobject jthis, jstring jstr) {
-    /* a simplest c++ example to compute strlen(jstr) */
-    const char *str = env->GetStringUTFChars(jstr, 0);
-    const int l = strlen(str);
-    return l;
+/**
+ * native void nativeFree(long pTidyDoc);
+ */
+JNIEXPORT void JNICALL Java_io_jokester_tidyj_TidyJ_nativeFree
+(JNIEnv *env, jobject jthis, jlong pTidyDoc) {
+    TidyDoc tdoc = (TidyDoc) pTidyDoc;
+    if (tdoc) {
+        tidyRelease(tdoc);
+    }
 }
-
