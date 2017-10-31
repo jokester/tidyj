@@ -1,0 +1,25 @@
+version: 2
+jobs:
+  build:
+    working_directory: ~/tidyj
+    docker:
+      - image: jokester/alpine-jni-build
+    steps:
+      - checkout
+
+      - run:
+          name: sync git submodules
+          command: git submodule init && git submodule update
+
+      - restore_cache:
+          key: cache-gradle-v0.1-1
+
+      - run
+          name: build and test
+          command: ./gradlew lib:test
+
+      # - save_cache:
+      #     key: cache-gradle-v0.1-1
+      #     paths:
+      #       - ~/.gradle
+
