@@ -14,12 +14,12 @@ jobs:
       - restore_cache:
           key: cache-gradle-v0.1-1
 
-      - run
+      - run:
           name: build and test
           command: ./gradlew lib:test
 
-      # - save_cache:
-      #     key: cache-gradle-v0.1-1
-      #     paths:
-      #       - ~/.gradle
+      - save_cache:
+          key: cache-gradle-v0.1-1
+          paths:
+            - ~/.gradle
 
