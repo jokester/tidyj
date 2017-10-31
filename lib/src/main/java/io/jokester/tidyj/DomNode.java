@@ -12,21 +12,19 @@ import java.util.Map;
  */
 public final class DomNode {
 
+    private static final Map<String, String> EmptyAttributeSet = Collections.emptyMap();
+    private static final List<DomNode> EmptyChildren = Collections.emptyList();
     /* @NonNull */
     public final String textContent;
-
     /* @NonNull */
     public final NodeType type;
-
     /* @NonNull
     * for element (start / end / startend tag): tagName for element
     * otherwise: null
     */
     public final String tagName;
-
     /* @NonNull */
     public final Map<String, String> attributes;
-
     /* @NonNull */
     public final List<DomNode> children;
 
@@ -45,9 +43,9 @@ public final class DomNode {
         this.type = type;
 
         switch (type) {
-            case TidyNode_Start:
-            case TidyNode_End:
-            case TidyNode_StartEnd:
+            case Start:
+            case End:
+            case StartEnd:
                 this.tagName = tagName == null ? "" : tagName;
                 break;
             default:
@@ -61,26 +59,49 @@ public final class DomNode {
         this.children = children == null ? EmptyChildren : Collections.unmodifiableList(children);
     }
 
-    private static final Map<String, String> EmptyAttributeSet = Collections.emptyMap();
-    private static final List<DomNode> EmptyChildren = Collections.emptyList();
-
     /**
      * mirrors TidyNodeType in tidyenum.h
      */
-    public static enum NodeType {
-        TidyNode_Root,        /**< Root */
-        TidyNode_DocType,     /**< DOCTYPE */
-        TidyNode_Comment,     /**< Comment */
-        TidyNode_ProcIns,     /**< Processing Instruction */
-        TidyNode_Text,        /**< Text */
-        TidyNode_Start,       /**< Start Tag */
-        TidyNode_End,         /**< End Tag */
-        TidyNode_StartEnd,    /**< Start/End (empty) Tag */
-        TidyNode_CDATA,       /**< Unparsed Text */
-        TidyNode_Section,     /**< XML Section */
-        TidyNode_Asp,         /**< ASP Source */
-        TidyNode_Jste,        /**< JSTE Source */
-        TidyNode_Php,         /**< PHP Source */
-        TidyNode_XmlDecl      /**< XML Declaration */
+    public enum NodeType {
+        Root, /**
+         * < Root
+         */
+        DocType, /**
+         * < DOCTYPE
+         */
+        Comment, /**
+         * < Comment
+         */
+        ProcIns, /**
+         * < Processing Instruction
+         */
+        Text, /**
+         * < Text
+         */
+        Start, /**
+         * < Start Tag
+         */
+        End, /**
+         * < End Tag
+         */
+        StartEnd, /**
+         * < Start/End (empty) Tag
+         */
+        CDATA, /**
+         * < Unparsed Text
+         */
+        Section, /**
+         * < XML Section
+         */
+        Asp, /**
+         * < ASP Source
+         */
+        Jste, /**
+         * < JSTE Source
+         */
+        Php, /**
+         * < PHP Source
+         */
+        XmlDecl      /**< XML Declaration */
     }
 }

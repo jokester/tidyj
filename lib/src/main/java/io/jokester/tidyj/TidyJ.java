@@ -1,257 +1,92 @@
 package io.jokester.tidyj;
 
-import java.io.Closeable;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.PushbackInputStream;
-import java.nio.ByteBuffer;
+import java.io.InputStream;
 
 /**
+ * TidyJ: factory methods
+ * <p>
+ * - factory method of
  * tidyj: a html tidy / parser
  * <p>
- * backened by tidy-html5 {@see https://github.com/htacg/tidy-html5}
  *
  * @author Wang Guan
- *
- *
+ * <p>
+ * <p>
  * Before memory management is implemented,
  * it is advised to use try-with to ensure TidyJ instance get closed:
- *
+ * <p>
  * <pre>
- * {@code
- * try (TidyJ t = TidyJ.parseString(string)) {
- *     ...code that uses t
- * }
- * </pre>
- *
+ *                         {@code
+ *                         try (TidyJ t = TidyJ.parseString(string)) {
+ *                             ...code that uses t
+ *                         }
+ *                         </pre>
+ * <p>
  * TODO: v0.1 basic tidy / IO
  */
-public final class TidyJ implements Closeable {
+public final class TidyJ {
 
     /**
-     * factory method to parse string
-     *
-     * @return TidyJ instance if the parsing succeeded
+     * default options
+     * FIXME: not
      */
-    public static TidyJ parseString(String htmlString) throws TidyJException {
-        return parseString(htmlString, /* 8M */ 1 << 23, null);
-    }
-
-    private static TidyJ parseString(String htmlString, int maxMem, TidyOptionSet options)
-            throws TidyJException {
-        return new TidyJ(maxMem, options);
-    }
-
-    private final ByteBuffer nativeRegion = null;
-    private final long pTidyDoc;
-    private boolean freed = false;
-
     private static final TidyOptionSet defaultOptions = new TidyOptionSet()
             .addIntOption("show-errors", 0)
             .addBoolOption("show-info", false)
+            .addBoolOption("show-warnings", false)
             .addBoolOption("drop-empty-elements", false)
-            .addBoolOption("show-warnings", false);
+            .addBoolOption("drop-empty-paras", false)
+            .addBoolOption("quiet", true);
 
     /**
-     * TidyJ: a parsed document
-     *
-     * @param maxMem  maximum memory to use
-     * @param options options
-     */
-    TidyJ(int maxMem, TidyOptionSet options)  {
-        pTidyDoc = this.nativeInit(nativeRegion);
-        if (pTidyDoc == 0)
-            throw new TidyJException.InitError("error initializing ");
-        defaultOptions.apply(this);
-        if (options != null)
-            options.apply(this);
-    }
-
-    /**
-     * @return had warning(s)
-     */
-    boolean parseHTML(String htmlString) throws TidyJException.ParseError {
-        int parseRet = nativeParse(pTidyDoc, htmlString);
-        if (parseRet >= 2) {
-            throw new TidyJException.ParseError("ParseError");
-        }
-
-        return parseRet != 0;
-    }
-
-    /**
-     * Set value of bool option
-     * @param optName tagName of option
-     * @param optValue value of option
-     * @return succeeded
-     */
-    boolean setBoolOption(String optName, boolean optValue) {
-        return nativeSetBoolOption(pTidyDoc, optName, optValue);
-    }
-
-    /**
-     * Set value of string option
-     * @param optName tagName of option
-     * @param optValue value of option
-     * @return succeeded
-     */
-    boolean setStringOption(String optName, String optValue) {
-        return nativeSetStringOption(pTidyDoc, optName, optValue);
-    }
-
-    /**
-     * Set value of int option
-     * @param optName tagName of option
-     * @param optValue value of option
-     * @return succeeded
-     */
-    boolean setIntOption(String optName, int optValue) {
-        return nativeSetIntOption(pTidyDoc, optName, optValue);
-    }
-
-    /**
-     * Set value of any libtidy option (it will be interpreted by underlying libtidy)
-     * @param optName tagName of option
-     * @param uninterpretedValue value of option
-     * @return succeeded
-     */
-    boolean setAnyOption(String optName, String uninterpretedValue) {
-        return nativeSetAnyOption(pTidyDoc, optName, uninterpretedValue);
-    }
-
-    /**
-     * Write to and close the stream
-     * @param stream output stream
-     * @return num of bytes written
-     */
-    public int save(OutputStream stream) throws IOException {
-        return save(stream, true);
-    }
-
-    /**
-     * Write to stream
-     * @param stream output stream
-     * @param closeAfterFinish whether to close the stream
-     * @return num of bytes written
-     */
-    synchronized
-    public int save(OutputStream stream, boolean closeAfterFinish) throws IOException {
-        // TODO: can we use a read-write lock to allow multi-threaded write?
-        assertNotFreed();
-        try {
-            int bytesWritten = nativeWriteStream(pTidyDoc, stream);
-            if (bytesWritten < 0) {
-                throw new IOException(String.format("nativeWriteStream returned %d", bytesWritten));
-            }
-            stream.flush();
-            return bytesWritten;
-        } finally {
-            if (closeAfterFinish)
-                stream.close();
-        }
-    }
-
-    /**
-     * Destroy underlying libtidy `TidyDoc` object, and return memory to native heap.
-     *
-     * After a call to close() or free(), most API of this instance would
-     * throw {@link TidyJException.AlreadyFreed}
-     *
-     * close() is idempotent: calling it more than once have no effect
-     */
-    synchronized
-    public void close() {
-        if (!freed)
-            free();
-    }
-
-    /**
-     * Destroy underlying libtidy `TidyDoc` object, and return memory to native heap
-     *
-     * After a call to close() or free(), most API of this instance would
-     * throw {@link TidyJException.AlreadyFreed}
-     *
-     * calling free() when TidyDoc is already freed would throw {@link TidyJException.AlreadyFreed}
-     */
-    synchronized
-    public void free() {
-        assertNotFreed();
-        nativeFree(pTidyDoc);
-        freed = true;
-    }
-
-    synchronized
-    private void assertNotFreed() {
-        if (freed)
-            throw new TidyJException.AlreadyFreed("already freed");
-    }
-
-    /**
-     *
-     * @param q a DomQuery instance
-     * @return opaque handles to matched nodes (internally, a TidyNode pointer)
-     */
-    synchronized long[] queryDom(DomQuery q) {
-        assertNotFreed();
-        return null;
-        // TODO
-    }
-
-    /**
-     * Copy pnodes from
-     * @param pNodes opaque handlers returned from {@see queryDom}
-     * @return DomNode objects that completely resides in java heap
-     */
-    synchronized DomNode[] pullDom(long[] pNodes) {
-        assertNotFreed();
-        return null;
-        // TODO: how to write this in native?
-    }
-
-    /**
-     * initialize TidyDoc object
-     * TODO: support memory allocator
-     *
-     * @return 0 if failed to create object
-     * otherwise: a opaque handle (internally, a pointer to native heap)
-     */
-    private native long nativeInit(ByteBuffer nativeMemory);
-
-    private native void nativeFree(long pTidyDoc);
-
-    /**
-     * parse document
-     *
-     * @return 2 on error, 1 on warning, 0 on clean
-     */
-    private native int nativeParse(long pTidyDoc, String htmlString);
-
-    /**
-     * TODO: support stream input
-     * libtidy internally have a TidyInputSource for streamed input:
-     * - get a byte
-     * - put back a byte
-     * - see if eof is reached
+     * factory methods for parsing and tidying String
      * <p>
-     * Thus the PushbackInputStream class is used here
+     * when factory method returns, the (there may be warnings)
+     *
+     * @return TidyJ instance if the parsing succeeded
+     * @throws TidyJException if error raised in parsing / cleaning
      */
-    private native int nativeParse(PushbackInputStream htmlStream);
-
-    private native boolean nativeSetBoolOption(long pTidyDoc, String optName, boolean optValue);
-    private native boolean nativeSetStringOption(long pTidyDoc, String optName, String optValue);
-    private native boolean nativeSetIntOption(long pTidyDoc, String optName, int optValue);
-    private native boolean nativeSetAnyOption(long pTidyDoc, String optName, String optValue);
-
-    /**
-     * write document to stream
-     * @param pTidyDoc
-     * @param stream
-     * @return num of bytes written
-     */
-    private native int nativeWriteStream(long pTidyDoc, OutputStream stream);
-
-    static {
-        System.loadLibrary("tidyj");
+    public static TidyDoc parseString(String docString) throws TidyJException {
+        return parseString(docString, /* options*/ null);
     }
+
+    public static TidyDoc parseStream(InputStream docStream) throws TidyJException {
+        return parseStream(docStream, /* options*/ null);
+    }
+
+    public static TidyDoc parseString(String docString, TidyOptionSet options) throws TidyJException.ParseError {
+        int maxMem = -1;
+        TidyDoc doc = new TidyDoc(maxMem);
+
+        try {
+            defaultOptions.apply(doc);
+            if (options != null) options.apply(doc);
+            doc.parse(docString);
+            doc.clean();
+            return doc;
+        } catch (Throwable e) {
+            // when error occurs after : ensure doc gets closed
+            doc.close();
+            throw e;
+        }
+    }
+
+    public static TidyDoc parseStream(InputStream docStream, TidyOptionSet options)
+            throws TidyJException {
+        int maxMem = -1;
+        TidyDoc doc = new TidyDoc(maxMem);
+        try {
+            defaultOptions.apply(doc);
+            if (options != null) options.apply(doc);
+            doc.parse(docStream);
+            doc.clean();
+            return doc;
+        } catch (Throwable e) {
+            // when error occurs after : ensure doc gets closed
+            doc.close();
+            throw e;
+        }
+    }
+
 
 }

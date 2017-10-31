@@ -18,7 +18,7 @@ task generateJniHeaders(type: Exec, dependsOn: 'classes') {
     def appclasspath = configurations.runtime.files*.absolutePath.join(":")
     def nativeIncludes = "src/main/native"
     def jniClasses = [
-            'io.jokester.tidyj.TidyJ'
+            'io.jokester.tidyj.TidyDoc'
     ]
     def javah = Jvm.current().getExecutable('javah')
     commandLine(javah, "-d", nativeIncludes, "-classpath", "$classpath:$appclasspath", *jniClasses)

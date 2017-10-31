@@ -3,46 +3,41 @@
  */
 
 #include <cstring>
-#include "io_jokester_tidyj_TidyJ.h"
+#include "io_jokester_tidyj_TidyDoc.h"
 #include "tidy.h"
 #include "jni-util.hpp"
 
 /**
   native boolean nativeSetBoolOption(long pTidyDoc, String optName, boolean optValue);
   */
-JNIEXPORT jboolean JNICALL Java_io_jokester_tidyj_TidyJ_nativeSetBoolOption
+JNIEXPORT jboolean JNICALL Java_io_jokester_tidyj_TidyDoc_nativeSetBoolOption
 (JNIEnv *env, jobject jthis, jlong pTidyDoc, jstring _optName, jboolean optValue) {
     assert(pTidyDoc && _optName);
 
     jboolean succeeded = false;
     TidyDoc tdoc = (TidyDoc) pTidyDoc;
     ctmbstr optName = env->GetStringUTFChars(_optName, NULL);
-    TidyOptionId optId;
     // tidyGetOptionByName returns NULL on fail
     // TidyOption objects are in static memory, no need to free
     TidyOption option = tidyGetOptionByName(tdoc, optName);
+    env->ReleaseStringUTFChars(_optName, optName);
 
     if (
             !option
             || tidyOptIsReadOnly(option)
             || (tidyOptGetType(option) != TidyBoolean)
-       ) goto fail;
+       ) return no;
 
-    optId = tidyOptGetId(option);
+    TidyOptionId optId = tidyOptGetId(option);
 
-    succeeded = tidyOptSetBool(tdoc, optId,  optValue ? yes: no);
-
-fail:
-    if (optName) {
-        env->ReleaseStringUTFChars(_optName, optName);
-    }
+    succeeded = tidyOptSetBool(tdoc, optId, optValue ? yes: no);
     return succeeded;
 }
 
 /*
    native boolean nativeSetStringOption(long pTidyDoc, String optName, String optValue);
    */
-JNIEXPORT jboolean JNICALL Java_io_jokester_tidyj_TidyJ_nativeSetStringOption
+JNIEXPORT jboolean JNICALL Java_io_jokester_tidyj_TidyDoc_nativeSetStringOption
 (JNIEnv *env, jobject jthis, jlong pTidyDoc, jstring _optName, jstring _optValue) {
     assert(pTidyDoc && _optName && _optValue);
 
@@ -77,33 +72,30 @@ fail:
 /**
  native boolean nativeSetIntOption(long pTidyDoc, String optName, int optValue);
  */
-JNIEXPORT jboolean JNICALL Java_io_jokester_tidyj_TidyJ_nativeSetIntOption
+JNIEXPORT jboolean JNICALL Java_io_jokester_tidyj_TidyDoc_nativeSetIntOption
 (JNIEnv *env, jobject jthis, jlong pTidyDoc, jstring _optName, jint optValue) {
     assert(pTidyDoc && _optName);
 
     jboolean succeeded = false;
     TidyDoc tdoc = (TidyDoc) pTidyDoc;
     ctmbstr optName = env->GetStringUTFChars(_optName, NULL);
-    TidyOptionId optId;
     TidyOption option = tidyGetOptionByName(tdoc, optName);
+    env->ReleaseStringUTFChars(_optName, optName);
 
     if (
             !option
             || tidyOptIsReadOnly(option)
             || (tidyOptGetType(option) != TidyInteger)
-       ) goto fail;
-
-    optId = tidyOptGetId(option);
+       ) return false;
+    TidyOptionId optId = tidyOptGetId(option);
     succeeded = tidyOptSetInt(tdoc, optId, optValue);
-
-fail:
-    if (optName) {
-        env->ReleaseStringUTFChars(_optName, optName);
-    }
     return succeeded;
 }
 
-JNIEXPORT jboolean JNICALL Java_io_jokester_tidyj_TidyJ_nativeSetAnyOption
+/**
+  private native boolean nativeSetAnyOption(long pTidyDoc, String optName, String optValue);
+ */
+JNIEXPORT jboolean JNICALL Java_io_jokester_tidyj_TidyDoc_nativeSetAnyOption
 (JNIEnv *env, jobject jthis, jlong pTidyDoc, jstring _optName, jstring _optValue) {
     assert(pTidyDoc && _optName && _optValue);
 
@@ -117,7 +109,7 @@ JNIEXPORT jboolean JNICALL Java_io_jokester_tidyj_TidyJ_nativeSetAnyOption
     if (
             !option
             || tidyOptIsReadOnly(option)
-       ) goto fail;
+       ) return false;
 
     optId = tidyOptGetId(option);
 
