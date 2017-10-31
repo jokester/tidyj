@@ -6,6 +6,8 @@ A Java JNI wrapper for [libtidy](http://www.html-tidy.org/developer/).
 
 Still in early development, not advised to use in serious product.
 
+[![CircleCI](https://circleci.com/gh/jokester/tidyj.svg?style=svg)](https://circleci.com/gh/jokester/tidyj)
+
 ## Planned features
 
 - v0.0 chaos (we are here)
