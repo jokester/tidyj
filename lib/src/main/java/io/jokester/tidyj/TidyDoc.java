@@ -139,7 +139,6 @@ public final class TidyDoc implements Closeable {
         return saveString("utf-8");
     }
 
-    synchronized
     public String saveString(String charsetName) throws IOException {
 
         ByteArrayOutputStream o = new ByteArrayOutputStream();
@@ -154,23 +153,24 @@ public final class TidyDoc implements Closeable {
      * @param stream           output stream
      * @param closeAfterFinish whether to close the stream
      * @return num of bytes written
+     *
+     * "synchronized" is used here to prevent concurrency execution:
+     * `tidySaveSink` saves sink inside TidyDoc and is not reentrant.
      */
     synchronized
     public int save(OutputStream stream, boolean closeAfterFinish) throws IOException {
         assertNotFreed();
         if (stream == null)
             throw new NullPointerException("OutputStream cannot be null");
-        try {
-            int bytesWritten = nativeWriteStream(pTidyDoc, stream);
-            if (bytesWritten < 0) {
-                throw new IOException(String.format("nativeWriteStream returned %d", bytesWritten));
-            }
-            stream.flush();
-            return bytesWritten;
-        } finally {
-            if (closeAfterFinish)
-                stream.close();
+
+        int bytesWritten = nativeWriteStream(pTidyDoc, stream);
+        if (bytesWritten < 0) {
+            throw new IOException(String.format("nativeWriteStream returned %d", bytesWritten));
         }
+        stream.flush();
+        if (closeAfterFinish)
+            stream.close();
+        return bytesWritten;
     }
 
     /**

@@ -35,10 +35,11 @@ Not done yet (goal of v0.3).
 
 ### Threading
 
-`tidyj` (and `libtidy` inside) cares little about thread switching:
-all code just run on caller thread, and do nothing after return.
+All public APIs of `tidyj` are thread-safe.
 
-A consumer is expected to manage thread by themselves. We attempt to make Java API less thread-unsafe.
+`libtidy` cares little about thread and concurrency stuff:
+all code just run on caller thread, and do nothing after return. Not all its APIs are thread safe.
+We handle that in `tidyj`.
 
 ### Memory
 
