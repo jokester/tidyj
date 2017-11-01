@@ -1,15 +1,11 @@
+#include <stdio.h>
+
 #include "tidyj-error.h"
 
-#define TIDYJ_debug
-
-#ifdef TIDYJ_debug
-#include <stdio.h>
-#endif
-
-
+#define TIDYJ_DEBUG 0
 
 void TIDYJ_error(const char* message, int code) {
-#ifdef TIDYJ_debug
+#if TIDYJ_DEBUG
     fprintf(stderr, message, code);
 #endif
 }

@@ -29,7 +29,8 @@ JNIEXPORT jlong JNICALL Java_io_jokester_tidyj_TidyDoc_nativeInit
         goto fail;
     }
 
-    // TODO: does cpp have a better cast for this?
+    // TODO: does cpp have a better cast for jlong <-> pointer?
+    // (feeling that explicit conversion may not be the right way)
     return (jlong) tdoc;
 
 fail:

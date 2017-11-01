@@ -109,7 +109,7 @@ JNIEXPORT jboolean JNICALL Java_io_jokester_tidyj_TidyDoc_nativeSetAnyOption
     if (
             !option
             || tidyOptIsReadOnly(option)
-       ) return false;
+       ) goto fail;
 
     optId = tidyOptGetId(option);
 

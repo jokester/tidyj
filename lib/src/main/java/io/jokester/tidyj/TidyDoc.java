@@ -11,6 +11,9 @@ import java.nio.ByteBuffer;
  * Note on methods: most methods are package-local, except the output / DOM APIs
  * they are only meant to be called from inside the package
  * <p>
+ * Memory: Before memory management is implemented, user MUST call close() or free() to free malloc-ed memory in native heap
+ * It is advised to use try-with to ensure TidyJ instance get closed.
+ * <p>
  * Corresponds to `TidyDoc` type of native tidy-html5 {@see https://github.com/htacg/tidy-html5}
  */
 public final class TidyDoc implements Closeable {
@@ -192,8 +195,7 @@ public final class TidyDoc implements Closeable {
      * <p>
      * calling free() when TidyDoc is already freed would throw {@link TidyJException.AlreadyFreed}
      */
-    synchronized
-    public void free() {
+    private void free() {
         assertNotFreed();
         nativeFree(pTidyDoc);
         freed = true;
@@ -206,8 +208,10 @@ public final class TidyDoc implements Closeable {
     }
 
     /**
+     *
+     *
      * @param q a DomQuery instance
-     * @return opaque handles to matched nodes (internally, a TidyNode pointer)
+     * @return opaque handles of matched nodes (internally, a handle is just a TidyNode pointer)
      */
     synchronized long[] queryDom(DomQuery q) {
         assertNotFreed();

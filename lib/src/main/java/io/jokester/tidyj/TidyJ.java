@@ -3,32 +3,15 @@ package io.jokester.tidyj;
 import java.io.InputStream;
 
 /**
- * TidyJ: factory methods
- * <p>
- * - factory method of
- * tidyj: a html tidy / parser
- * <p>
+ * TidyJ: static factory methods to do parse + clean with libtidy
  *
- * @author Wang Guan
- * <p>
- * <p>
  * Before memory management is implemented,
- * it is advised to use try-with to ensure TidyJ instance get closed:
- * <p>
- * <pre>
- *                         {@code
- *                         try (TidyJ t = TidyJ.parseString(string)) {
- *                             ...code that uses t
- *                         }
- *                         </pre>
- * <p>
- * TODO: v0.1 basic tidy / IO
+ * it is advised to use try-with to ensure TidyJ instance get closed.
  */
 public final class TidyJ {
 
     /**
      * default options
-     * FIXME: not
      */
     private static final TidyOptionSet defaultOptions = new TidyOptionSet()
             .addIntOption("show-errors", 0)
@@ -37,6 +20,9 @@ public final class TidyJ {
             .addBoolOption("drop-empty-elements", false)
             .addBoolOption("drop-empty-paras", false)
             .addBoolOption("quiet", true);
+
+    private TidyJ() {
+    }
 
     /**
      * factory methods for parsing and tidying String
@@ -65,7 +51,7 @@ public final class TidyJ {
             doc.clean();
             return doc;
         } catch (Throwable e) {
-            // when error occurs after : ensure doc gets closed
+            // when error occurs, ensure doc gets closed
             doc.close();
             throw e;
         }
@@ -82,11 +68,9 @@ public final class TidyJ {
             doc.clean();
             return doc;
         } catch (Throwable e) {
-            // when error occurs after : ensure doc gets closed
+            // when error occurs, ensure doc gets closed
             doc.close();
             throw e;
         }
     }
-
-
 }
