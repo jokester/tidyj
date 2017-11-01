@@ -11,6 +11,9 @@ import java.nio.ByteBuffer;
  * Note on methods: most methods are package-local, except the output / DOM APIs
  * they are only meant to be called from inside the package
  * <p>
+ * Memory: Before memory management is implemented, user MUST call close() or free() to free malloc-ed memory in native heap
+ * It is advised to use try-with to ensure TidyJ instance get closed.
+ * <p>
  * Corresponds to `TidyDoc` type of native tidy-html5 {@see https://github.com/htacg/tidy-html5}
  */
 public final class TidyDoc implements Closeable {
@@ -136,7 +139,6 @@ public final class TidyDoc implements Closeable {
         return saveString("utf-8");
     }
 
-    synchronized
     public String saveString(String charsetName) throws IOException {
 
         ByteArrayOutputStream o = new ByteArrayOutputStream();
@@ -151,23 +153,24 @@ public final class TidyDoc implements Closeable {
      * @param stream           output stream
      * @param closeAfterFinish whether to close the stream
      * @return num of bytes written
+     *
+     * "synchronized" is used here to prevent concurrency execution:
+     * `tidySaveSink` saves sink inside TidyDoc and is not reentrant.
      */
     synchronized
     public int save(OutputStream stream, boolean closeAfterFinish) throws IOException {
         assertNotFreed();
         if (stream == null)
             throw new NullPointerException("OutputStream cannot be null");
-        try {
-            int bytesWritten = nativeWriteStream(pTidyDoc, stream);
-            if (bytesWritten < 0) {
-                throw new IOException(String.format("nativeWriteStream returned %d", bytesWritten));
-            }
-            stream.flush();
-            return bytesWritten;
-        } finally {
-            if (closeAfterFinish)
-                stream.close();
+
+        int bytesWritten = nativeWriteStream(pTidyDoc, stream);
+        if (bytesWritten < 0) {
+            throw new IOException(String.format("nativeWriteStream returned %d", bytesWritten));
         }
+        stream.flush();
+        if (closeAfterFinish)
+            stream.close();
+        return bytesWritten;
     }
 
     /**
@@ -192,8 +195,7 @@ public final class TidyDoc implements Closeable {
      * <p>
      * calling free() when TidyDoc is already freed would throw {@link TidyJException.AlreadyFreed}
      */
-    synchronized
-    public void free() {
+    private void free() {
         assertNotFreed();
         nativeFree(pTidyDoc);
         freed = true;
@@ -206,8 +208,10 @@ public final class TidyDoc implements Closeable {
     }
 
     /**
+     *
+     *
      * @param q a DomQuery instance
-     * @return opaque handles to matched nodes (internally, a TidyNode pointer)
+     * @return opaque handles of matched nodes (internally, a handle is just a TidyNode pointer)
      */
     synchronized long[] queryDom(DomQuery q) {
         assertNotFreed();

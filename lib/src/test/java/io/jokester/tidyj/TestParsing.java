@@ -2,8 +2,7 @@ package io.jokester.tidyj;
 
 import org.junit.Test;
 
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 
 import static org.junit.Assert.assertEquals;
 
@@ -39,15 +38,12 @@ public class TestParsing {
     public static String Expected_HTML_427830 = "/cases/testbase-expects/case-427830.html";
 
     @Test
-    public void testParseString1() throws TidyJException, IOException {
+    public void testParseString() throws TidyJException, IOException {
         assertCleanResult(
                 TestUtil.getTestResString(Expected_HTML_427830),
                 TestUtil.getTestResString(TestCase_HTML_427830),
                 defaultOptions);
-    }
 
-    @Test
-    public void testParseString2() throws TidyJException, IOException {
         assertCleanResult(
                 TestUtil.getTestResString(Expected_HTML_1003361),
                 TestUtil.getTestResString(TestCase_HTML_1003361),
@@ -60,6 +56,45 @@ public class TestParsing {
                 TestUtil.getTestResString(Expected_HTML_427830),
                 TestUtil.getTestResStream(TestCase_HTML_427830),
                 defaultOptions);
+
+        assertCleanResult(
+                TestUtil.getTestResString(Expected_HTML_1003361),
+                TestUtil.getTestResStream(TestCase_HTML_1003361),
+                defaultOptions);
+    }
+
+    @Test(expected = IOError.class)
+    public void badOutputStreamThrowsToJava() throws TidyJException, IOException {
+        String s = TestUtil.getTestResString(TestCase_HTML_427830);
+
+        OutputStream badStream = new ByteArrayOutputStream() {
+            private int written = 0;
+            @Override
+            public synchronized void write(int b) {
+                if (++written > 10)
+                    throw new IOError(new Error("test error"));
+                super.write(b);
+            }
+        };
+
+        try (TidyDoc doc = TidyJ.parseString(s)) {
+            doc.save(badStream);
+        }
+    }
+
+    @Test(expected = IOException.class, timeout = 1000L)
+    public void badInputStreamThrowsToJava() throws TidyJException, IOException {
+        final String s = TestUtil.getTestResString(TestCase_HTML_427830);
+
+        InputStream badStream = new InputStream() {
+            @Override
+            public int read() throws IOException {
+                throw new IOException();
+            }
+        };
+
+        try (TidyDoc doc = TidyJ.parseStream(badStream)) {
+        }
     }
 
     private void assertCleanResult(String expected, String input, TidyOptionSet options) throws TidyJException, IOException {

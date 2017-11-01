@@ -39,7 +39,7 @@ public class TestOptions {
             t_ = t;
             /* close() calls free() internally */
         }
-        t_.free();
+        t_.saveString();
     }
 
     @Test
