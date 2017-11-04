@@ -2,20 +2,17 @@
 
 A Java JNI wrapper for [libtidy](http://www.html-tidy.org/developer/).
 
-## Status
-
-Still in early development, not advised to use in serious product.
-
 [![CircleCI](https://circleci.com/gh/jokester/tidyj.svg?style=svg)](https://circleci.com/gh/jokester/tidyj)
 
-## Planned features
+## Features
 
-- v0.0 chaos (we are here)
-- v0.1 basic HTML / XML tiding, and not breaking things
-- v0.2 Readonly DOM access
-- v0.3 Android support and example app
-- v0.4 Control over memory usage
+- v0.1 basic HTML / XML tiding, and not breaking things (we are here)
+- v0.2 Android support and an example app
 
+<!--
+- v0.4 Readonly DOM access
+- v0.3 Control over memory usage
+ -->
 <!-- TODO: add example app -->
 
 ## For Users
@@ -29,16 +26,17 @@ If you are familiar of this, creating a issue is more than welcome.
 
 ### How to use from Android
 
-Not done yet (goal of v0.3).
+Not done yet (goal of v0.2).
 
 <!-- TODO: publish aar for android -->
 
 ### Threading
 
-`tidyj` (and `libtidy` inside) cares little about thread switching:
-all code just run on caller thread, and do nothing after return.
+All public APIs of `tidyj` are thread-safe.
 
-A consumer is expected to manage thread by themselves. We attempt to make Java API less thread-unsafe.
+`libtidy` cares little about thread and concurrency stuff:
+all code just run on caller thread, and do nothing after return. Not all its APIs are thread safe.
+We handle that in `tidyj`.
 
 ### Memory
 

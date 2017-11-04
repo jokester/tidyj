@@ -7,7 +7,7 @@ import java.io.ByteArrayOutputStream;
 import static org.junit.Assert.assertEquals;
 
 @SuppressWarnings("WeakerAccess")
-public class TestTidyJ {
+public class TestOptions {
 
     // a perfect html5
     public static final String TestHTML1 = "<!DOCTYPE html> <html> <head> <title>test</title> </head> <body> <p>Body</p> </body> </html>";
@@ -16,34 +16,37 @@ public class TestTidyJ {
 
     @Test
     public void createInstance1() throws Exception {
-        try (TidyJ t = new TidyJ(0, null)) {
-            boolean hadWarning = t.parseHTML(TestHTML1);
+        try (TidyDoc t = new TidyDoc(0)) {
+            boolean hadWarning = t.parse(TestHTML1);
             assertEquals(false, hadWarning);
         }
     }
 
     @Test
     public void createInstance2() throws Exception {
-        try (TidyJ t = new TidyJ(0, null)) {
-            boolean hadWarning = t.parseHTML(TestHTML2);
+        try (TidyDoc t = new TidyDoc(0)) {
+
+            boolean hadWarning = t.parse(TestHTML2);
             assertEquals(true, hadWarning);
         }
     }
 
     @Test(expected = TidyJException.AlreadyFreed.class)
     public void freeTwiceThrowsAlreadyFreed() throws Exception {
-        TidyJ t_;
-        try (TidyJ t = new TidyJ(0, null)) {
+        TidyDoc t_;
+        try (TidyDoc t = new TidyDoc(0)) {
+
             t_ = t;
             /* close() calls free() internally */
         }
-        t_.free();
+        t_.saveString();
     }
 
     @Test
     public void outputBuffer() throws Exception {
-        try (TidyJ t = new TidyJ(0, null)) {
-            t.parseHTML(TestHTML2);
+        try (TidyDoc t = new TidyDoc(0)) {
+
+            t.parse(TestHTML2);
 
             ByteArrayOutputStream o = new ByteArrayOutputStream();
             int numBytes = t.save(o);
@@ -58,7 +61,7 @@ public class TestTidyJ {
                             "</head>\n" +
                             "<body>\n" +
                             "Body\n" +
-                            "<p></p>\n" +
+                            // dropped empty element "<p></p>\n" +
                             "</body>\n" +
                             "</html>\n";
             assertEquals(expected, s);
@@ -69,21 +72,24 @@ public class TestTidyJ {
     @Test(expected = TidyJException.IllegalOption.class)
     public void setNonexistBoolOption() {
         TidyOptionSet o = new TidyOptionSet().addBoolOption("v", false);
-        try (TidyJ t = new TidyJ(0, o)) {
+        try (TidyDoc t = new TidyDoc(0)) {
+            o.apply(t);
         }
     }
 
     @Test(expected = TidyJException.IllegalOption.class)
     public void setNonBoolOption() {
         TidyOptionSet o = new TidyOptionSet().addBoolOption(/* a string option */ "alt-text", false);
-        try (TidyJ t = new TidyJ(0, o)) {
+        try (TidyDoc t = new TidyDoc(0)) {
+            o.apply(t);
         }
     }
 
     @Test(expected = TidyJException.IllegalOption.class)
     public void setReadonlyBoolOption() {
         TidyOptionSet o = new TidyOptionSet().addBoolOption(/* a string */ "unknown!", false);
-        try (TidyJ t = new TidyJ(0, o)) {
+        try (TidyDoc t = new TidyDoc(0)) {
+            o.apply(t);
         }
     }
 
@@ -98,7 +104,8 @@ public class TestTidyJ {
                 .addAnyOption("indent", "auto")
                 .addAnyOption("indent", "0")
                 .addAnyOption("new-empty-tags", "hey1");
-        try (TidyJ t = new TidyJ(0, o)) {
+        try (TidyDoc t = new TidyDoc(0)) {
+            o.apply(t);
         }
     }
 
@@ -106,7 +113,8 @@ public class TestTidyJ {
     public void setNonexistStringOption() {
         TidyOptionSet o = new TidyOptionSet()
                 .addStringOption("blt-text", "hey");
-        try (TidyJ t = new TidyJ(0, o)) {
+        try (TidyDoc t = new TidyDoc(0)) {
+            o.apply(t);
         }
     }
 
@@ -114,15 +122,18 @@ public class TestTidyJ {
     public void setNonexistIntOption() {
         TidyOptionSet o = new TidyOptionSet()
                 .addIntOption("show-errrrors", 5);
-        try (TidyJ t = new TidyJ(0, o)) {
+        try (TidyDoc t = new TidyDoc(0)) {
+            o.apply(t);
         }
+
     }
 
     @Test(expected = TidyJException.IllegalOption.class)
     public void setNonIntOption() {
         TidyOptionSet o = new TidyOptionSet()
                 .addIntOption("show-info", 5);
-        try (TidyJ t = new TidyJ(0, o)) {
+        try (TidyDoc t = new TidyDoc(0)) {
+            o.apply(t);
         }
     }
 
@@ -130,7 +141,8 @@ public class TestTidyJ {
     public void setNonexistAnyOption() {
         TidyOptionSet o = new TidyOptionSet()
                 .addAnyOption("show-errrrors", "5");
-        try (TidyJ t = new TidyJ(0, o)) {
+        try (TidyDoc t = new TidyDoc(0)) {
+            o.apply(t);
         }
     }
 
@@ -138,8 +150,10 @@ public class TestTidyJ {
     public void setIncorrectAnyOption() {
         TidyOptionSet o = new TidyOptionSet()
                 .addAnyOption("new-empty-tags", "");
-        try (TidyJ t = new TidyJ(0, o)) {
+        try (TidyDoc t = new TidyDoc(0)) {
+            o.apply(t);
         }
+
     }
 
 }
