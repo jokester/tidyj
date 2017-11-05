@@ -6,29 +6,36 @@ A Java JNI wrapper for [libtidy](http://www.html-tidy.org/developer/).
 
 ## Features
 
-- v0.1 basic HTML / XML tiding, and not breaking things (we are here)
-- v0.2 Android support and an example app
+Current: v0.2
+
+- basic HTML / XML tiding, and not breaking things
+- Android support and an example app
+
+Next: v0.3
+- Control over memory usage
 
 <!--
 - v0.4 Readonly DOM access
-- v0.3 Control over memory usage
+- v0.3
  -->
 <!-- TODO: add example app -->
 
 ## For Users
 
-### How to use from Java
+### How to use from Java (gradle)
 
-Frankly speaking I am not sure how can one publish hybrid + Java code for traditional Java,
+Currently one need to copy code (`lib/src/main`), CMake configuration (`lib/CMakeLists.txt`),
+and a few gradle tasks (in `lib/build.gradle`) to use from another Java project.
+
+// I am not sure how should one "publish" native code for traditional Java,
 or how do Java developers consume them. <!-- TODO: update -->
-
-If you are familiar of this, creating a issue is more than welcome.
+(If you are familiar of this, creating a issue is more than welcome.)
 
 ### How to use from Android
 
-Not done yet (goal of v0.2).
+Currently one need to copy related files to Android module. See `android-demo/` for an example.
 
-<!-- TODO: publish aar for android -->
+<!-- TODO: publish aar for android? -->
 
 ### Threading
 
@@ -41,7 +48,7 @@ We handle that in `tidyj`.
 ### Memory
 
 Currently (before v0.3), underlying `tidylib` uses `free / memory`
-to allocate memory in [native heap](https://docs.oracle.com/javase/8/docs/technotes/guides/troubleshoot/memleaks005.html#sthref46).
+to allocate memory in completely non-managed [native heap](https://docs.oracle.com/javase/8/docs/technotes/guides/troubleshoot/memleaks005.html#sthref46).
 
 <!-- TODO: add a close() method -->
 
