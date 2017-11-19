@@ -12,14 +12,14 @@ jobs:
           command: git submodule init && git submodule update
 
       - restore_cache:
-          key: cache-gradle-v0.1-1
+          key: cache-gradle-v0.2-1
 
       - run:
           name: build and test
           command: ./gradlew lib:test
 
       - save_cache:
-          key: cache-gradle-v0.1-1
+          key: cache-gradle-v0.2-1
           paths:
             - ~/.gradle
 

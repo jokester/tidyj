@@ -6,9 +6,20 @@
  * user guide available at https://docs.gradle.org/4.2.1/userguide/tutorial_java_projects.html
  */
 
-repositories {
-    mavenCentral()
+buildscript {
+    repositories {
+        jcenter()
+        mavenCentral()
+        google()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:3.0.0'
+    }
 }
 
-dependencies {
+allprojects {
+    repositories {
+        jcenter()
+        google()
+    }
 }

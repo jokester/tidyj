@@ -10,8 +10,8 @@ find_package(JNI REQUIRED)
 
 file(GLOB NATIVE_SRC
     "tidy-html5/src/*.c"
-    "src/main/native/*.c"
-    "src/main/native/*.cpp")
+    "src/main/cpp/*.c"
+    "src/main/cpp/*.cpp")
 
 ####### c / c++ flags
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -D_REENTRANT -std=c++11")

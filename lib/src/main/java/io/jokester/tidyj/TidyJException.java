@@ -1,6 +1,6 @@
 package io.jokester.tidyj;
 
-class TidyJException extends Exception {
+public class TidyJException extends Exception {
 
     TidyJException(String message) {
         super(message);
