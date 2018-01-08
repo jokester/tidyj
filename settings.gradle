@@ -16,4 +16,5 @@ include 'services:webservice'
 */
 
 rootProject.name = 'tidyj'
-include 'lib'
+include ':lib'
+include ':android-demo'
